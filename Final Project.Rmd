@@ -1,0 +1,289 @@
+---
+title: "Final Project Example"
+output: 
+  html_document:
+    highlight: textmate
+date: "`r Sys.Date()`"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r main instructions, include=FALSE}
+# Final Term Project Write-up Instructions
+
+#Please read the following, and be sure to follow all instructions. There is no resubmit opportunity for this assignment:
+
+#1.  Each section will have headings and 1-2 code blocks. Do not edit the headings for each section (anything with one or more #'s at the start of the line. The first code block will be instructions for that section and will not be knit into the final document. The second code block (if present) will be for you to include your own code needed to complete the section. It will be knitted and presented in the final document. 
+
+#2.  Examine all the feedback you got on your proposal so far. Do you need to modify your question, hypothesis, experimental design, or analytical plan? This term project will be graded on its own merit, separate from how you did on any of the checkpoints. You are not held to the decisions you made on previous checkpoints. You are only required to use the data you were given and the same primary statistical test that you included on the survey generating your simulated data.
+
+
+#4. Feel free to copy and paste anything you'd like from your previous checkpoint assignments.
+
+#5. You are welcome to use ChatGPT or any generative AI to help generate your code. However, you MUST properly cite all instances where it was used and include an annotation stating how you used it. This should be brief and you are ultimately responsible for everything you include, regardless of its origin. Un-annotated, un-cited code using functions from outside of the class can be docked points.
+
+#6. You will often be instructed to write text in specific places inside square brackets. Delete the square brackets and all instructional text contained within before you submit.
+
+#7. If you do not use the data file you were given, your assignment will not be graded and you will get a zero.
+
+#8.  Knit your .RMD document as an html and submit the html to Canvas. It is due Sunday the 7th at 11:59pm. Be aware that late penalties will be assessed, and no projects will be accepted after the final exam.
+```
+
+```{r, echo=FALSE,message=FALSE,warning=FALSE}
+library(tidyverse) #Always the first step
+```
+
+<h4 style="text-align: center;">Term Project Description</h4>
+This document is a final project for the UCSD Course BILD 5.
+My project builds upon the study referenced below. I have proposed a potential follow-up experiment to extend the study's findings. The project utilizes simulated data, structured and analyzed as if collected from a real experiment. While the outcomes do not provide scientific evidence, they showcase my skills in formulating and addressing relevant biological questions through statistics, experimental design, and programming.
+
+
+<h4 style="text-align: center;">Article Citation</h4>
+
+Ogawa, M. (2021). Relationship between oral health and physical frailty in patients with cardiovascular disease. Journal of Cardiology, 77(2), 131–138.
+
+<h4 style="text-align: center;">Research Question</h4>
+
+How Type of Coca Cola intake (Control, Original, Diet Coke) Relates to Relative Enamel Calcium Index?
+
+<h4 style="text-align: center;">Null Hypothesis</h4>
+
+Null hypothesis is that average of Relative Enamel Calcium Index from each group is equal to the overall mean of Enamel Calcium Index.
+
+<h4 style="text-align: center;">Alternate Hypothesis</h4>
+
+Alternate Hypothesis is that at least one group's predicted value of Relative Enamel Calcium Index differs from the mean of Enamel Calcium Index.
+
+<h4 style="text-align: center;">Test Performed</h4>
+I will perform ANOVA, as there are 3 groups of continuous data Enamel Calcium Index.
+
+
+:::: {style="display: grid; grid-template-columns: 1fr 1fr; grid-column-gap: 10px;"}
+
+::: {0.5}
+
+```{r Section2 instructions, include=FALSE}
+
+#In the first code chunk, read in your data table, and make it tidy (or add deltas) if you need to. Save your tidy table to the data object TIDY_DF. This code chunk will run, but it will not show up in the final html knit.
+
+#Do not change anything in the next code chunk! This is to make sure that your data are now tidy.
+
+#Before the next code chunk is space for you to explain what sort of checking of the data you will be doing to make sure the data meet the assumptions of the model. Using a short paragraph, explain the steps you are going to take to check that your data meet the assumptions of your analysis. For example, maybe you need to make a model and build a histogram residuals? Maybe you need to do a ks test on something? Show me you know the correct steps.
+
+#Enter your code for all figures needed for this Exploratory Data Analysis (EDA) in the next code block. Any figures you make should be labeled appropriately. It should be understandable to someone that does not have access to read your code.
+
+#The next code chunk is for any tests for normality you want to perform. If there are multiple, it should be clear which column of data each is testing.
+
+#After the code block, write a paragraph discussing your EDA results and if you had to do anything regarding outliers or data transformations. Remember to justify all of your decisions in writing and reference the work you just performed. You will make any changes in the next section.
+
+```
+#### Import and Tidy the Data
+```{r, echo=FALSE,results='hide'}
+#This is the code chunk where you will read in the data and make a tidy table.
+untidyDF  <- read.csv("yax027-1.csv")
+untidyDF2 <- untidyDF[, -1]
+
+TIDY_DF <- untidyDF2 %>%
+  pivot_longer(
+    cols      = 1:3,
+    names_to  = "Groups",
+    values_to = "RelativeEnamelCalciumIndex"
+  ) %>%
+  mutate(
+    Groups = recode(Groups,
+                    "A" = "Control",
+                    "B" = "Original",
+                    "C" = "Diet")
+  )
+```
+
+```{r,echo=FALSE}
+#Do not change anything in this code chunk. It is to grade your tidy table.
+str(TIDY_DF)
+```
+
+#### Exploratory Data Analysis
+In this section I would explain the things that need to be checked and how I would do so for the type of test I am performing.
+
+
+```{r,echo=FALSE}
+#In this section, make any figures you need to perform to examine the data. All figures need to be made in ggplot
+
+m1<-lm(RelativeEnamelCalciumIndex~Groups, TIDY_DF)
+Residual<-residuals(m1)
+Residual_Histogram<-ggplot(TIDY_DF,aes(x=Residual))+
+  geom_histogram(bins=30)+
+  labs(
+    x="Residual of Relative Enamel Calcium Index",
+    y="Count"
+  )+
+  theme_minimal()
+Residual_Histogram
+ks_test<-ks.test(Residual, pnorm, mean(Residual), sd(Residual))
+ks_test
+sequence<-c(1:90)
+cooks_distance<-cooks.distance(m1)
+plot_df<-data.frame(sequence, TIDY_DF$Groups, cooks_distance)
+cooks<-ggplot(TIDY_DF, aes(x = sequence, y = cooks_distance, color = TIDY_DF$Groups)) +
+  geom_point(size = 2, position = position_jitter(width = 0.2)) +
+  scale_color_gradient2(midpoint = 0) +
+  theme_minimal() +
+  scale_color_manual(
+    values = c(
+      "Control" = "#000000",  
+      "Original" = "#f40009",  
+      "Diet" = "#A7A7A7"   
+    )
+  ) +
+  labs(color = "Groups",x="Order of Sample",y="Cook's Distance")
+cooks
+```
+
+```{r,warning=FALSE}
+
+
+
+```
+
+
+ *** 
+ 
+#### Description of Current Data and Plan for Fixes if Needed
+
+I did the ks test and the p value indicates that residual distribution is normal. Then the cooks distance scatter graph shows there is no outliers. My data is very good.
+
+:::
+
+::: {}
+#### Correct Data Issues and Build Final Data Table.
+```{r Section3 instructions, include=FALSE}
+
+#Before the first code chunk, use a single sentence to describe your plan for data correction if needed. If not, simply state that the data already meet the assumptions of the model.
+
+#In the first code chunk, you will fix any issues and make a new tidy table. If you have nothing to fix, just assign your original tidy table to this new object called Corrected_TIDY_DF. 
+
+#Do not alter any code in the final code chunk of this section.
+```
+
+
+From the K-S test, we can observe that the residuals are normally distributed, as p value is greater than 0.05. On the Cook's distance plot, we can see all residuals have a cook's distance less than 0.2. This Data is neither skewed nor has outlier. Thus there is no need to do extra process to this data frame.
+
+
+```{r, echo=FALSE,results='hide'}
+#This is the code chunk where you will fix any issues and make a new tidy table. If you have nothing to fix, just assign your original tidy table to this new object. 
+
+Corrected_TIDY_DF<-TIDY_DF
+```
+
+```{r,echo=FALSE}
+#Do not change any thing in this code chunk. It is to grade your new, possibly corrected tidy table.
+str(Corrected_TIDY_DF)
+```
+
+#### Demonstrate That Your New Data Fit the Assmuptions of the Model
+```{r Section4 instructions, include=FALSE}
+#Enter your code for all figures needed to demonstrate that the corrected data meet the assumptions of the model in the first code block. Any figures you make should be labeled appropriately. It should be understandable to someone that does not have access to read your code. If your data were already meeting the assumptions of your model in section 2, you may leave this code chunk blank.
+
+#The code chunk following your figures is for any tests for normality you want to perform. If there are multiple, it should be clear which column of data each is testing. If your data were already meeting the assumptions of your model in section 2, you may leave this code chunk blank.
+
+
+```
+
+```{r,echo=FALSE}
+
+```
+
+```{r, warning=FALSE}
+
+```
+
+ *** 
+  
+  
+#### Test the Null Hypothesis of Your Research Question
+```{r Section5 instructions, include=FALSE}
+#In the code block below, enter all code you need to test the null hypothesis of your research question. If you need to perform any post-hoc analysis, do so in this section as well.
+
+#Hint! In this section, make sure we can see your results. Look back at past homeworks for ways I have had you do this.
+```
+
+```{r}
+summary(m1)
+post_hoc<-aov(RelativeEnamelCalciumIndex~Groups, Corrected_TIDY_DF)
+TukeyHSD(post_hoc)
+```
+
+
+#### Build the Figure That Best Tells the Story of Your Model
+```{r Section6 instructions, include=FALSE}
+#In the code block below, build a high quality figure that tells the story of your results. Plots should have: axis labels that make sense, the correct geometry, good use of space, and color. I have given the IAs permission to give a bonus point for very high quality or creative figures that still meet specifications.  
+```
+
+```{r,echo=FALSE}
+
+plot1 <- ggplot(
+  data = TIDY_DF, 
+  aes(
+    x = Groups, 
+    y = RelativeEnamelCalciumIndex
+  )
+) +
+  geom_boxplot(
+    aes(fill = Groups),
+    median.colour = "white"
+) +
+  theme_minimal() +
+  labs(
+    x = "",
+    y = "Relative Enamel Calcium Index"
+  ) +
+  scale_x_discrete(
+    labels = c(
+      Control = "Control",
+      Original = "Coca-Cola",
+      Diet = "Diet Coke"
+    )
+  ) +
+  scale_fill_manual(                    
+    values = c(
+      Control = "#000000",  
+      Original = "#f40009",  
+      Diet = "#A7A7A7"   
+    ),
+    labels = c(
+      Control = "Control",
+      Original = "Coca-Cola",
+      Diet = "Diet Coke"
+    )
+  ) +
+  theme(
+    axis.text.x = element_text(
+      family = "Times New Roman",
+      face = "bold",
+      size = 14
+    ),
+    axis.title.y = element_text(
+      family = "Times New Roman",
+      face = "bold",
+      size = 14
+    )
+  )
+
+plot1
+
+```
+
+#### Figure Caption
+
+```{r Section7 instructions, include=FALSE}
+#In the space below these instructions, but above the three colon mark(:::), write a summary of your findings by way of a figure caption. Walk the reader through your findings highlighting the important values from your analysis. Yes, the actual numbers should be in this paragraph!
+```
+
+From the ANOVA test we can tell the F statistic shows 38.43 with degree of freedom of 2 (group) and 87 (sample). p value is 1.098e-12 and therefore Null hypothesis is rejected. at least one group have group-wide mean different from the whole sample mean. Then post-hoc test is done using TukeyHSD. the result form TukeyHSD tells us all three groups are different from each other, as all three sets of data has a p value less than 0.05, so null hypothesis (of the mean of two groups are equal) is rejected. From the graph, indicate that both Coca-Cola and Diet Coke significantly reduce enamel calcium. Moreover, Coca-Cola caused significantly greater mineral loss than Diet Coke, suggesting that regular Coca-Cola is more damaging to enamel than Diet Coke.
+
+:::
+
+::::
+
